@@ -1,0 +1,85 @@
+"""Memory Match Arena: Flask routes and score submission API."""
+from datetime import datetime, timezone
+import os
+from pathlib import Path
+import re
+import sqlite3
+
+from flask import Flask, jsonify, render_template, request
+
+from game_rules import DIFFICULTIES, calculate_score, validate_result
+
+BASE_DIR = Path(__file__).resolve().parent
+
+
+def create_app(test_config=None):
+    app = Flask(__name__)
+    app.config.update(DATABASE=str(BASE_DIR / 'scores.db'), JSON_SORT_KEYS=False)
+    if test_config:
+        app.config.update(test_config)
+
+    def connection():
+        db = sqlite3.connect(app.config['DATABASE'])
+        db.row_factory = sqlite3.Row
+        return db
+
+    with connection() as db:
+        db.execute('''CREATE TABLE IF NOT EXISTS scores (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            player TEXT NOT NULL,
+            difficulty TEXT NOT NULL,
+            seconds INTEGER NOT NULL,
+            moves INTEGER NOT NULL,
+            score INTEGER NOT NULL,
+            created_at TEXT NOT NULL
+        )''')
+        db.commit()
+
+    @app.get('/')
+    def home():
+        return render_template('index.html', difficulties=DIFFICULTIES)
+
+    @app.get('/api/leaderboard')
+    def leaderboard():
+        difficulty = request.args.get('difficulty', 'easy')
+        if difficulty not in DIFFICULTIES:
+            return jsonify(error='Invalid difficulty.'), 400
+        with connection() as db:
+            rows = db.execute('''SELECT player, difficulty, seconds, moves, score, created_at
+                FROM scores WHERE difficulty = ?
+                ORDER BY score DESC, seconds ASC, moves ASC, id ASC LIMIT 10''',
+                (difficulty,)).fetchall()
+        return jsonify(results=[dict(row) for row in rows])
+
+    @app.post('/api/scores')
+    def save_score():
+        payload = request.get_json(silent=True)
+        if not isinstance(payload, dict):
+            return jsonify(error='Send a JSON object.'), 400
+        player = payload.get('player')
+        if not isinstance(player, str) or not re.fullmatch(r'[\w .-]{2,20}', player, flags=re.UNICODE) or not player.strip():
+            return jsonify(error='Name must be 2–20 letters, digits, spaces, dots, underscores or dashes.'), 400
+        difficulty = payload.get('difficulty')
+        seconds = payload.get('seconds')
+        moves = payload.get('moves')
+        reason = validate_result(difficulty, seconds, moves)
+        if reason:
+            return jsonify(error=reason), 400
+        score = calculate_score(difficulty, seconds, moves)
+        with connection() as db:
+            cursor = db.execute('''INSERT INTO scores
+                (player, difficulty, seconds, moves, score, created_at)
+                VALUES (?, ?, ?, ?, ?, ?)''',
+                (player.strip(), difficulty, seconds, moves, score,
+                 datetime.now(timezone.utc).isoformat(timespec='seconds')))
+            db.commit()
+            entry_id = cursor.lastrowid
+        return jsonify(id=entry_id, score=score, message='Score saved!'), 201
+
+    return app
+
+
+app = create_app()
+
+if __name__ == '__main__':
+    app.run(debug=os.getenv('FLASK_DEBUG') == '1')

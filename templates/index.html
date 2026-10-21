@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#0c1024" />
+  <title>Memory Match Arena | ROSPL Team Project</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+  <script defer src="{{ url_for('static', filename='js/game.js') }}"></script>
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <a class="brand" href="/" aria-label="Memory Match Arena home"><span class="brand-logo">✦</span><span>MEMORY<span class="accent">MATCH</span><small>ARENA</small></span></a>
+      <div class="top-actions"><span class="course-pill">ROSPL · OPEN SOURCE</span><button id="themeBtn" class="icon-btn" aria-label="Toggle color theme" title="Toggle theme">☾</button></div>
+    </header>
+    <main>
+      <section class="hero">
+        <div class="eyebrow">✦ TRAIN YOUR BRAIN. BEAT YOUR BEST.</div>
+        <h1>Flip. Match. <span class="gradient-text">Win.</span></h1>
+        <p>Turn over cards, remember what you saw, and uncover every pair. Faster moves mean a higher score.</p>
+      </section>
+      <section class="content-grid">
+        <div class="game-panel panel">
+          <div class="panel-heading"><div><div class="overline">01 / PLAY</div><h2>Game Arena</h2></div><span class="status" id="gameStatus">Ready to play</span></div>
+          <div class="controls">
+            <label>YOUR NAME<input id="playerName" maxlength="20" placeholder="Enter player name" autocomplete="nickname" value="Player" /></label>
+            <label>DIFFICULTY<select id="difficulty"><option value="easy">Easy · 6 pairs</option><option value="medium">Medium · 8 pairs</option><option value="hard">Hard · 12 pairs</option></select></label>
+            <button class="primary-btn" id="restartBtn">↻ New game</button>
+          </div>
+          <div class="stats" aria-label="Game statistics">
+            <div class="stat"><span>TIME</span><strong id="timer">00:00</strong></div><div class="stat"><span>MOVES</span><strong id="moves">0</strong></div><div class="stat"><span>MATCHES</span><strong id="matches">0/6</strong></div><div class="stat"><span>EST. SCORE</span><strong id="score">1500</strong></div>
+          </div>
+          <div class="board-wrap"><div class="board" id="board" aria-label="Memory matching cards"></div></div>
+          <div class="game-footer"><span id="hintText">Choose two cards to find a matching pair.</span><button id="hintBtn" class="text-btn" title="Reveal unmatched cards briefly; adds 15 seconds">✧ Peek (+15s)</button></div>
+          <p class="live-info" id="feedback" role="status" aria-live="polite"></p>
+        </div>
+        <aside class="side-stack">
+          <section class="panel leaderboard-panel">
+            <div class="panel-heading"><div><div class="overline">02 / COMPETE</div><h2>Leaderboard</h2></div><span class="trophy">🏆</span></div>
+            <p class="subtle">Top 10 scores for selected difficulty.</p>
+            <div id="leaderboard" aria-live="polite"><p class="empty">Loading scores…</p></div>
+            <button id="refreshBtn" class="secondary-btn">↻ Refresh leaderboard</button>
+          </section>
+          <section class="panel about-panel"><div class="overline">03 / ABOUT</div><h2>How to play</h2><ol><li>Pick a difficulty and enter your name.</li><li>Click any two cards to flip them over.</li><li>Find all matching pairs with fewer moves.</li><li>Submit your score when you finish!</li></ol><div class="tags"><span>Python</span><span>Flask</span><span>JavaScript</span><span>SQLite</span></div></section>
+        </aside>
+      </section>
+      <section class="team-section panel" id="team"><div class="overline">04 / OPEN SOURCE</div><h2>Built by four contributors</h2><p>Each member owns a real module. Add teammates' names after they complete their contributions.</p><div class="team-grid"><article><div class="avatar">01</div><h3>Member 1</h3><p>Frontend & visual design</p><code>static/css/style.css</code></article><article><div class="avatar">02</div><h3>Member 2</h3><p>Game logic & interactions</p><code>static/js/game.js</code></article><article><div class="avatar">03</div><h3>Member 3</h3><p>Flask API & leaderboard</p><code>app.py · game_rules.py</code></article><article><div class="avatar">04</div><h3>Member 4</h3><p>Testing & documentation</p><code>tests/ · docs/</code></article></div></section>
+    </main>
+    <footer>Made for ROSPL · Open-source learning project · <a href="#team">Meet the contributors</a></footer>
+  </div>
+  <div class="modal-backdrop hidden" id="winModal" role="dialog" aria-modal="true" aria-labelledby="winTitle"><div class="modal"><div class="win-symbol">✦</div><div class="overline">LEVEL COMPLETED</div><h2 id="winTitle">Brilliant memory!</h2><p>You found all the pairs.</p><div class="win-summary"><div><span>TIME</span><strong id="finalTime">—</strong></div><div><span>MOVES</span><strong id="finalMoves">—</strong></div><div><span>SCORE</span><strong id="finalScore">—</strong></div></div><div class="modal-actions"><button id="saveBtn" class="primary-btn">Save my score</button><button id="againBtn" class="secondary-btn">Play again</button></div><p id="saveFeedback" role="status"></p></div></div>
+</body>
+</html>
