@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # ✦ Memory Match Arena
 
 **Four-member ROSPL game project** — a responsive browser-based memory matching game with a Python Flask backend and SQLite leaderboard.
@@ -89,3 +90,7 @@ Multiplayer challenges, keyboard navigation, sounds, achievement badges, score v
 ## License
 
 This original student starter is offered under the [MIT License](LICENSE). Credits for subsequent work should be attributed in Git commits and the contribution table.
+=======
+# Memory-Match-Arena
+An open-source memory matching game built using Python Flask, HTML, CSS, JavaScript and SQLite.
+>>>>>>> 07b69bfcb6ae76bca642713e770ab650b5c2a735
