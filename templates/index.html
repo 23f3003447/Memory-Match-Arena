@@ -49,6 +49,19 @@
     </main>
     <footer>Made for ROSPL · Open-source learning project · <a href="#team">Meet the contributors</a></footer>
   </div>
-  <div class="modal-backdrop hidden" id="winModal" role="dialog" aria-modal="true" aria-labelledby="winTitle"><div class="modal"><div class="win-symbol">✦</div><div class="overline">LEVEL COMPLETED</div><h2 id="winTitle">Brilliant memory!</h2><p>You found all the pairs.</p><div class="win-summary"><div><span>TIME</span><strong id="finalTime">—</strong></div><div><span>MOVES</span><strong id="finalMoves">—</strong></div><div><span>SCORE</span><strong id="finalScore">—</strong></div></div><div class="modal-actions"><button id="saveBtn" class="primary-btn">Save my score</button><button id="againBtn" class="secondary-btn">Play again</button></div><p id="saveFeedback" role="status"></p></div></div>
+  <div class="modal-backdrop hidden" id="winModal" role="dialog" aria-modal="true" aria-labelledby="winTitle"><div class="modal"><div class="win-symbol">✦</div><div class="overline">LEVEL COMPLETED</div><h2 id="winTitle">Brilliant memory!</h2><p>You found all the pairs.</p><div class="win-summary"><div><span>TIME</span><strong id="finalTime">—</strong></div><div><span>MOVES</span><strong id="finalMoves">—</strong></div><div><span>SCORE</span><strong id="finalScore">—</strong></div></div>
+  <div class="achievements-section">
+    <div class="achievements-heading">
+      <span>ACHIEVEMENTS</span>
+      <span id="achievementCount">0 unlocked</span>
+    </div>
+  
+    <div id="achievementList" class="achievement-list" aria-live="polite">
+      <p class="achievement-empty">
+        Save your score to check your achievements.
+      </p>
+    </div>
+  </div>
+  <div class="modal-actions"><button id="saveBtn" class="primary-btn">Save my score</button><button id="againBtn" class="secondary-btn">Play again</button></div><p id="saveFeedback" role="status"></p></div></div>
 </body>
 </html>

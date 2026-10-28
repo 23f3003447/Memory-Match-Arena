@@ -5,7 +5,21 @@
   const icons = ['🚀','🎮','🌈','🪐','🎯','🦋','⚡','🎨','🐙','💎','🌙','🦄'];
   const $ = id => document.getElementById(id);
   const el = {
-    board:$('board'), difficulty:$('difficulty'), name:$('playerName'), timer:$('timer'), moves:$('moves'), matches:$('matches'), score:$('score'), status:$('gameStatus'), feedback:$('feedback'), modal:$('winModal'), save:$('saveBtn'), hint:$('hintBtn'), leaderboard:$('leaderboard')
+    board:$('board'),
+    difficulty:$('difficulty'),
+    name:$('playerName'),
+    timer:$('timer'),
+    moves:$('moves'),
+    matches:$('matches'),
+    score:$('score'),
+    status:$('gameStatus'),
+    feedback:$('feedback'),
+    modal:$('winModal'),
+    save:$('saveBtn'),
+    hint:$('hintBtn'),
+    leaderboard:$('leaderboard'),
+    achievementList:$('achievementList'),
+    achievementCount:$('achievementCount')
   };
   let cards = [], first = null, second = null, locked = false, moveCount = 0, matchCount = 0, seconds = 0;
   let started = false, finished = false, timerId = null, flipTimeout = null, peekTimeout = null, peekUsed = false, epoch = 0;
@@ -47,9 +61,25 @@
     }
   }
   function complete(){
-    finished=true;clearInterval(timerId);timerId=null;el.status.textContent='Completed!';
-    finishData={player:el.name.value.trim(),difficulty:el.difficulty.value,seconds:Math.max(1,seconds),moves:moveCount};
-    $('finalTime').textContent=formatTime(seconds);$('finalMoves').textContent=moveCount;$('finalScore').textContent=currentScore();$('saveFeedback').textContent='';el.save.disabled=false;el.modal.classList.remove('hidden');
+    finished=true;
+    clearInterval(timerId);
+    timerId=null;
+    el.status.textContent='Completed!';
+
+    finishData={
+      player:el.name.value.trim(),
+      difficulty:el.difficulty.value,
+      seconds:Math.max(1,seconds),
+      moves:moveCount,
+      peek_used:peekUsed
+    };
+
+    $('finalTime').textContent=formatTime(seconds);
+    $('finalMoves').textContent=moveCount;
+    $('finalScore').textContent=currentScore();
+    $('saveFeedback').textContent='';
+    el.save.disabled=false;
+    el.modal.classList.remove('hidden');
   }
   function peek(){
     if(locked||finished||peekUsed||first||seconds>=3585)return;
@@ -57,15 +87,78 @@
     const temporary=cards.filter(c=>!c.matched&&!c.flipped);temporary.forEach(showCard);
     const currentEpoch=epoch;peekTimeout=setTimeout(()=>{if(currentEpoch!==epoch)return;temporary.forEach(hideCard);locked=false;el.feedback.textContent='Peek used! 15-second penalty applied.';},1500);
   }
-  async function saveScore(){
-    if(!finishData)return;
-    el.save.disabled=true;$('saveFeedback').textContent='Saving…';
-    try{
-      const response=await fetch('/api/scores',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(finishData)});
-      const data=await response.json();if(!response.ok)throw Error(data.error||'Unable to save.');
-      $('saveFeedback').textContent=`Saved! Your official score is ${data.score}.`;await loadLeaderboard();
-    }catch(error){$('saveFeedback').textContent=error.message;el.save.disabled=false;}
+  function renderAchievements(achievements){
+  el.achievementList.replaceChildren();
+
+  if(!achievements || !achievements.length){
+    el.achievementCount.textContent='0 unlocked';
+
+    const empty=document.createElement('p');
+    empty.className='achievement-empty';
+    empty.textContent='No new achievements this game. Keep playing!';
+    el.achievementList.append(empty);
+
+    return;
   }
+
+  el.achievementCount.textContent=
+    `${achievements.length} unlocked`;
+
+  achievements.forEach(achievement=>{
+    const item=document.createElement('div');
+    item.className='achievement-card';
+
+    const icon=document.createElement('span');
+    icon.className='achievement-icon';
+    icon.textContent=achievement.icon;
+    icon.setAttribute('aria-hidden','true');
+
+    const content=document.createElement('div');
+    content.className='achievement-content';
+
+    const name=document.createElement('strong');
+    name.textContent=achievement.name;
+
+    const description=document.createElement('span');
+    description.textContent=achievement.description;
+
+    content.append(name,description);
+    item.append(icon,content);
+
+    el.achievementList.append(item);
+  });
+}
+async function saveScore(){
+  if(!finishData)return;
+
+  el.save.disabled=true;
+  $('saveFeedback').textContent='Saving…';
+
+  try{
+    const response=await fetch('/api/scores',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(finishData)
+    });
+
+    const data=await response.json();
+
+    if(!response.ok){
+      throw Error(data.error||'Unable to save.');
+    }
+
+    $('saveFeedback').textContent=
+      `Saved! Your official score is ${data.score}.`;
+
+    renderAchievements(data.achievements);
+
+    await loadLeaderboard();
+
+  }catch(error){
+    $('saveFeedback').textContent=error.message;
+    el.save.disabled=false;
+  }
+}
   async function loadLeaderboard(){
     el.leaderboard.innerHTML='<p class="empty">Loading scores…</p>';
     try{
