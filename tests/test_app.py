@@ -61,6 +61,32 @@ def test_achievement_gallery(client):
     assert achievements['peek_free']['unlocked'] is True
     assert achievements['hard_mode_hero']['unlocked'] is False
 
+
+def test_invalid_achievement_player_rejected(client):
+    response = client.get('/api/achievements?player=<script>')
+
+    assert response.status_code == 400
+
+
+def test_empty_achievement_gallery(client):
+    response = client.get('/api/achievements?player=NewPlayer')
+
+    assert response.status_code == 200
+    assert response.json['player'] == 'NewPlayer'
+    assert response.json['unlocked'] == 0
+    assert response.json['total'] == 5
+
+    assert all(
+        achievement['unlocked'] is False
+        for achievement in response.json['achievements']
+    )
+
+    assert achievements['first_victory']['unlocked'] is True
+    assert achievements['speed_runner']['unlocked'] is True
+    assert achievements['perfect_memory']['unlocked'] is True
+    assert achievements['peek_free']['unlocked'] is True
+    assert achievements['hard_mode_hero']['unlocked'] is False
+
 def test_invalid_achievement_player_rejected(client):
     response = client.get('/api/achievements?player=<script>')
 
