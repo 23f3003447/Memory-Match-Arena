@@ -160,6 +160,63 @@ def create_app(test_config=None):
             message='Score saved!',
         ), 201
 
+    @app.get('/api/achievements')
+    def get_achievements():
+        player = request.args.get('player', '').strip()
+
+        if (
+            not isinstance(player, str)
+            or not re.fullmatch(
+                r'[\w .-]{2,20}',
+                player,
+                flags=re.UNICODE
+            )
+            or not player
+        ):
+            return jsonify(
+                error='Name must be 2–20 letters, digits, spaces, dots, underscores or dashes.'
+            ), 400
+
+        with connection() as db:
+            rows = db.execute(
+                '''SELECT achievement_id, earned_at
+                FROM achievements
+                WHERE player = ?
+                ORDER BY earned_at ASC''',
+                (player,)
+            ).fetchall()
+
+        unlocked = {
+            row['achievement_id']: row['earned_at']
+            for row in rows
+        }
+
+        achievements = []
+
+        for achievement_id, achievement in ACHIEVEMENTS.items():
+            earned_at = unlocked.get(achievement_id)
+
+            achievements.append({
+                "id": achievement_id,
+                "name": achievement["name"],
+                "description": achievement["description"],
+                "icon": achievement["icon"],
+                "unlocked": earned_at is not None,
+                "earned_at": earned_at,
+            })
+
+        unlocked_count = sum(
+            1 for achievement in achievements
+            if achievement["unlocked"]
+        )
+
+        return jsonify(
+            player=player,
+            unlocked=unlocked_count,
+            total=len(achievements),
+            achievements=achievements,
+        ), 200
+
     return app
 
 

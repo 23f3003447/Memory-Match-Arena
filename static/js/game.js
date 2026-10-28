@@ -4,23 +4,25 @@
   const levels = {easy: 6, medium: 8, hard: 12};
   const icons = ['🚀','🎮','🌈','🪐','🎯','🦋','⚡','🎨','🐙','💎','🌙','🦄'];
   const $ = id => document.getElementById(id);
-  const el = {
-    board:$('board'),
-    difficulty:$('difficulty'),
-    name:$('playerName'),
-    timer:$('timer'),
-    moves:$('moves'),
-    matches:$('matches'),
-    score:$('score'),
-    status:$('gameStatus'),
-    feedback:$('feedback'),
-    modal:$('winModal'),
-    save:$('saveBtn'),
-    hint:$('hintBtn'),
-    leaderboard:$('leaderboard'),
-    achievementList:$('achievementList'),
-    achievementCount:$('achievementCount')
-  };
+const el = {
+  board:$('board'),
+  difficulty:$('difficulty'),
+  name:$('playerName'),
+  timer:$('timer'),
+  moves:$('moves'),
+  matches:$('matches'),
+  score:$('score'),
+  status:$('gameStatus'),
+  feedback:$('feedback'),
+  modal:$('winModal'),
+  save:$('saveBtn'),
+  hint:$('hintBtn'),
+  leaderboard:$('leaderboard'),
+  achievementList:$('achievementList'),
+  achievementCount:$('achievementCount'),
+  galleryAchievementList:$('galleryAchievementList'),
+  galleryProgress:$('galleryProgress')
+};
   let cards = [], first = null, second = null, locked = false, moveCount = 0, matchCount = 0, seconds = 0;
   let started = false, finished = false, timerId = null, flipTimeout = null, peekTimeout = null, peekUsed = false, epoch = 0;
   let finishData = null;
@@ -128,6 +130,110 @@
     el.achievementList.append(item);
   });
 }
+async function loadAchievementGallery(){
+  const player=el.name.value.trim();
+
+  if(!player){
+    el.galleryProgress.textContent='0 / 5';
+
+    el.galleryAchievementList.innerHTML=`
+      <div class="gallery-empty">
+        <span class="gallery-empty-icon">🏆</span>
+        <strong>Enter your player name to view your achievements.</strong>
+        <span>Your progress will appear here.</span>
+      </div>
+    `;
+
+    return;
+  }
+
+  try{
+    const response=await fetch(
+      `/api/achievements?player=${encodeURIComponent(player)}`
+    );
+
+    const data=await response.json();
+
+    if(!response.ok){
+      throw Error(data.error||'Unable to load achievements.');
+    }
+
+    el.galleryProgress.textContent=
+      `${data.unlocked} / ${data.total}`;
+
+    el.galleryAchievementList.replaceChildren();
+
+    data.achievements.forEach(achievement=>{
+      const card=document.createElement('div');
+
+      card.className=
+        `gallery-achievement-card ${
+          achievement.unlocked ? 'unlocked' : 'locked'
+        }`;
+
+      const icon=document.createElement('div');
+
+      icon.className='gallery-achievement-icon';
+      icon.textContent=achievement.unlocked
+        ? achievement.icon
+        : '🔒';
+
+      icon.setAttribute('aria-hidden','true');
+
+      const content=document.createElement('div');
+      content.className='gallery-achievement-content';
+
+      const header=document.createElement('div');
+      header.className='gallery-achievement-header';
+
+      const name=document.createElement('strong');
+      name.textContent=achievement.name;
+
+      const status=document.createElement('span');
+      status.className='gallery-achievement-status';
+
+      status.textContent=achievement.unlocked
+        ? 'UNLOCKED'
+        : 'LOCKED';
+
+      header.append(name,status);
+
+      const description=document.createElement('span');
+      description.className='gallery-achievement-description';
+      description.textContent=achievement.description;
+
+      content.append(header,description);
+
+      if(achievement.unlocked && achievement.earned_at){
+        const earned=document.createElement('small');
+
+        earned.className='gallery-achievement-date';
+
+        const date=new Date(achievement.earned_at);
+
+        earned.textContent=
+          `Unlocked ${date.toLocaleDateString()}`;
+
+        content.append(earned);
+      }
+
+      card.append(icon,content);
+
+      el.galleryAchievementList.append(card);
+    });
+
+  }catch(error){
+    el.galleryProgress.textContent='—';
+
+    el.galleryAchievementList.innerHTML=`
+      <div class="gallery-empty">
+        <span class="gallery-empty-icon">⚠</span>
+        <strong>Unable to load achievements.</strong>
+        <span>${error.message}</span>
+      </div>
+    `;
+  }
+}
 async function saveScore(){
   if(!finishData)return;
 
@@ -174,8 +280,22 @@ async function saveScore(){
       });
     }catch{el.leaderboard.innerHTML='<p class="empty">Leaderboard unavailable. Check the Flask server.</p>';}
   }
-  $('restartBtn').addEventListener('click',reset);$('againBtn').addEventListener('click',reset);$('hintBtn').addEventListener('click',peek);$('saveBtn').addEventListener('click',saveScore);$('refreshBtn').addEventListener('click',loadLeaderboard);
+  $('restartBtn').addEventListener('click',reset);
+  $('againBtn').addEventListener('click',reset);
+  $('hintBtn').addEventListener('click',peek);
+  $('saveBtn').addEventListener('click',saveScore);
+  $('refreshBtn').addEventListener('click',loadLeaderboard);
+
   el.difficulty.addEventListener('change',reset);
-  $('themeBtn').addEventListener('click',()=>{document.body.classList.toggle('light');$('themeBtn').textContent=document.body.classList.contains('light')?'☀':'☾';});
+
+  // Load achievement gallery when the player name is entered/changed
+  el.name.addEventListener('blur',loadAchievementGallery);
+
+  $('themeBtn').addEventListener('click',()=>{
+    document.body.classList.toggle('light');
+    $('themeBtn').textContent=
+      document.body.classList.contains('light')?'☀':'☾';
+  });
+
   reset();
 })();
